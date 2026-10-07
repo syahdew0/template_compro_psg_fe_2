@@ -62,11 +62,11 @@
             <div 
               v-for="(feature, idx) in features"
               :key="idx"
-              class="flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#FFD43B]/50 transition-all duration-300 group cursor-pointer"
+              class="flex items-center gap-3 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#FFD43B]/50 transition-all duration-300 group cursor-pointer"
               ref="featureEls"
             >
               <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFD43B] to-yellow-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <i :class="feature.icon" class="text-black text-sm"></i>
+                <img v-if="feature.icon" :src="feature.icon" class="w-4 h-4 object-contain" />
               </div>
               <div>
                 <p class="font-semibold text-gray-900 text-sm">{{ feature.label }}</p>
@@ -114,15 +114,22 @@
               ref="statsCard1"
             >
               <div class="grid grid-cols-2 gap-6">
-                <div class="text-center space-y-2">
-                  <div class="text-3xl font-bold text-[#FFD43B]">15+</div>
-                  <p class="text-sm text-gray-700">Years Experience</p>
-                </div>
-                <div class="text-center space-y-2">
-                  <div class="text-3xl font-bold text-yellow-500">500+</div>
-                  <p class="text-sm text-gray-700">Projects Done</p>
-                </div>
-              </div>
+  <div
+    v-for="(s, i) in stats"
+    :key="i"
+    class="text-center space-y-2"
+    :ref="el => { if (i === 0) statsCard1.value = el; if (i === 1) statsCard2.value = el; }"
+  >
+    <div
+      class="text-3xl font-bold"
+      :class="i % 2 === 0 ? 'text-[#FFD43B]' : 'text-yellow-500'"
+    >
+      {{ s.value }}
+    </div>
+    <p class="text-sm text-gray-700">{{ s.label }}</p>
+  </div>
+</div>
+
             </div>
 
             <!-- Floating Feature Card -->
@@ -131,14 +138,15 @@
               ref="statsCard2"
             >
               <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#FFD43B] to-yellow-400 flex items-center justify-center flex-shrink-0">
-                  <i class="fa-solid fa-star text-black text-xl"></i>
-                </div>
-                <div>
-                  <p class="font-bold text-gray-900 text-lg">Certified</p>
-                  <p class="text-xs text-gray-600">Industry Leaders</p>
-                </div>
-              </div>
+  <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#FFD43B] to-yellow-400 flex items-center justify-center flex-shrink-0">
+    <i class="fa-solid fa-star text-black text-xl"></i>
+  </div>
+  <div>
+    <p class="font-bold text-gray-900 text-lg">{{ atributTitle.title }}</p>
+    <p class="text-xs text-gray-600">{{ atributTitle.subtitle }}</p>
+  </div>
+</div>
+
             </div>
           </div>
         </div>
@@ -150,24 +158,25 @@
       <!-- Values Section -->
       <div class="space-y-12">
         <div class="text-center space-y-4">
-          <h3 class="text-3xl md:text-4xl font-bold text-gray-900">Our Core Values</h3>
-          <p class="text-lg text-gray-600">What drives us every single day</p>
+          <h3 class="text-3xl md:text-4xl font-bold text-gray-900">{{ core.title }}</h3>
+    <p class="text-lg text-gray-600">{{ core.subtitle }}</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div 
-            v-for="(value, idx) in values"
-            :key="idx"
-            class="group p-8 rounded-2xl bg-white border-2 border-gray-200 hover:border-[#FFD43B]/50 hover:shadow-xl transition-all duration-300"
-            ref="valueCards"
-          >
-            <div class="w-16 h-16 rounded-xl bg-[#FFD43B]/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <i :class="value.icon" class="text-2xl text-[#FFD43B]"></i>
-            </div>
-            <h4 class="text-xl font-bold text-gray-900 mb-3">{{ value.title }}</h4>
-            <p class="text-gray-700 leading-relaxed">{{ value.description }}</p>
-          </div>
-        </div>
+         <!-- Item cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div
+      v-for="(value, idx) in values"
+      :key="idx"
+      class="group p-8 rounded-2xl bg-white border-2 border-gray-200 hover:border-[#FFD43B]/50 hover:shadow-xl transition-all duration-300"
+      ref="valueCards"
+    >
+      <div class="w-16 h-16 rounded-xl bg-[#FFD43B]/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        <img :src="value.icon" class="w-8 h-8 object-contain" />
+      </div>
+      <h4 class="text-xl font-bold text-gray-900 mb-3">{{ value.title }}</h4>
+      <p class="text-gray-700 leading-relaxed">{{ value.description }}</p>
+    </div>
+  </div>
       </div>
     </div>
   </section>
@@ -199,6 +208,7 @@ const statsCard2 = ref(null)
 const featureEls = ref([])
 const valueCards = ref([])
 
+
 // Data Refs
 const badge = ref('')
 const title = ref('')
@@ -206,37 +216,56 @@ const content = ref('')
 const image = ref('')
 const visionTitle = ref('')
 const visionContent = ref('')
+const stats = ref([])
+const atributTitle = ref({})
 
-// Static Data
-const features = ref([
-  { label: 'Innovation', icon: 'fa-solid fa-zap' },
-  { label: 'Quality', icon: 'fa-solid fa-check-circle' },
-  { label: 'Support', icon: 'fa-solid fa-headset' },
-  { label: 'Security', icon: 'fa-solid fa-shield' }
-])
+const core = ref({
+  title: 'Our Core Values',
+  subtitle: 'What drives us every single day'
+})
+const values = ref([]) // [{ title, description, icon }]
 
-const values = ref([
-  {
-    title: 'Excellence',
-    description: 'We strive for excellence in every project, delivering results that exceed expectations.',
-    icon: 'fa-solid fa-trophy'
-  },
-  {
-    title: 'Integrity',
-    description: 'We believe in honest communication and transparent business practices with all partners.',
-    icon: 'fa-solid fa-handshake'
-  },
-  {
-    title: 'Innovation',
-    description: 'We embrace new technologies and creative solutions to solve complex business challenges.',
-    icon: 'fa-solid fa-lightbulb'
-  }
-])
+
+
+const features = ref([])
 
 // Parse Data
 function parse(data) {
-  if (!data) return {}
-  return typeof data === 'string' ? JSON.parse(data) : data
+  if (data == null) return null;
+  let out = data;
+
+  if (typeof out === 'string') {
+    try {
+      out = JSON.parse(out);
+    } catch (e) {
+      // gagal parse → biarkan apa adanya (bukan empty block)
+      out = data;
+    }
+  }
+
+  if (Array.isArray(out)) {
+    out = out
+      .map(it => {
+        if (typeof it === 'string') {
+          try {
+            return JSON.parse(it);
+          } catch (e) {
+            return null; // buang item yang invalid
+          }
+        }
+        return it;
+      })
+      .filter(Boolean);
+  }
+  return out;
+}
+
+function toHttps(url) {
+  if (!url || typeof url !== 'string') return '';
+  // paksa https untuk domain api kamu
+  return url.startsWith('http://apicompro.phisoft.co.id')
+    ? url.replace('http://', 'https://')
+    : url;
 }
 
 // Watch for Data Changes
@@ -244,7 +273,7 @@ watchEffect(() => {
   const allData = props.pageData || {}
 
   const badgeRaw = allData.badge_about
-  const aboutRaw = allData.About_PSG
+  const aboutRaw = allData.about_PSG
   const visiRaw = allData.about_visi
 
   const badgeItems = parse(badgeRaw)
@@ -388,10 +417,83 @@ const parallaxEffect = () => {
 
 // Lifecycle
 onMounted(() => {
-  setTimeout(() => {
-    animateOnScroll()
-    parallaxEffect()
-  }, 100)
+  const raw = localStorage.getItem('customPageData:Home')
+  if (!raw) return console.warn('Data halaman Home tidak ditemukan di localStorage')
+
+  try {
+    const data = JSON.parse(raw)
+
+    // === about_atribut_tittle2 ===
+const attrTitleRaw = data.about_atribut_tittle2 ?? data.About_atribut_tittle2 ?? null
+const attrTitleParsed = parse(attrTitleRaw)
+
+if (Array.isArray(attrTitleParsed) && attrTitleParsed.length) {
+  atributTitle.value = {
+    title: attrTitleParsed[0]?.title || atributTitle.value.title,
+    subtitle: attrTitleParsed[0]?.content || atributTitle.value.subtitle
+  }
+} else if (attrTitleParsed) {
+  atributTitle.value = {
+    title: attrTitleParsed?.title || atributTitle.value.title,
+    subtitle: attrTitleParsed?.content || atributTitle.value.subtitle
+  }
+}
+
+    // === about_atribut2 ===
+const atributRaw = data.about_atribut2 ?? data.About_atribut2 ?? null
+const atributParsed = parse(atributRaw)
+// pastikan array
+const atributArr = Array.isArray(atributParsed) ? atributParsed : (atributParsed ? [atributParsed] : [])
+stats.value = atributArr.map(it => ({
+  value: it?.title ?? '',
+  label: it?.content ?? ''
+}))
+
+    // === our_core2 ===
+    const coreRaw = data.our_core2 ?? data.Our_core2 ?? null
+    const coreParsed = parse(coreRaw)
+    if (Array.isArray(coreParsed) && coreParsed.length) {
+      core.value = {
+        title: coreParsed[0]?.title || core.value.title,
+        subtitle: coreParsed[0]?.content || core.value.subtitle
+      }
+    } else if (coreParsed) {
+      core.value = {
+        title: coreParsed.title || core.value.title,
+        subtitle: coreParsed.content || core.value.subtitle
+      }
+    }
+
+const aboutIconRaw = data.about_icon2 ?? data.About_icon2 ?? null
+const aboutIconParsed = parse(aboutIconRaw)
+const iconArr = Array.isArray(aboutIconParsed) ? aboutIconParsed : (aboutIconParsed ? [aboutIconParsed] : [])
+features.value = iconArr.map(it => ({
+  label: it?.title ?? '',
+  icon: toHttps(it?.icon ?? '')
+}))
+
+    // === our_core_items2 ===
+    const itemsRaw = data.our_core_items2 ?? data.Our_core_items2 ?? null
+const itemsParsed = parse(itemsRaw)
+const arr = Array.isArray(itemsParsed) ? itemsParsed : (itemsParsed ? [itemsParsed] : [])
+values.value = arr.map(it => ({
+  title: it?.title ?? '',
+  description: it?.content ?? it?.description ?? '',
+  icon: toHttps(it?.icon ?? '')
+}))
+
+features.value = Array.isArray(features.value) ? features.value : []
+values.value   = Array.isArray(values.value)   ? values.value   : []
+stats.value    = Array.isArray(stats.value)    ? stats.value    : []
+
+    // === jalankan animasi setelah data terload ===
+    setTimeout(() => {
+      animateOnScroll()
+      parallaxEffect()
+    }, 100)
+  } catch (err) {
+    console.error('Gagal parsing data Our Core Values:', err)
+  }
 })
 
 onUnmounted(() => {

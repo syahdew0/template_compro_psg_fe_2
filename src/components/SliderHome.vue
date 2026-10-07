@@ -137,71 +137,11 @@
 
       </div>
     </div>
-
-    <!-- Stats Section - Dark with Yellow Accents -->
-    <div v-if="hero.stats?.length" class="relative bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900">
-      <!-- Background Image with Overlay -->
-      <div class="absolute inset-0">
-        <div
-          v-if="hero.stats_bg"
-          class="absolute inset-0 bg-cover bg-center opacity-10"
-          :style="{ backgroundImage: `url(${getImage(hero.stats_bg)})` }"
-        ></div>
-        <div class="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-slate-900/95 to-gray-800/90"></div>
-      </div>
-
-      <!-- Animated Background Elements - Yellow -->
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div ref="statsBlob1" class="absolute top-0 left-1/4 w-96 h-96 bg-[#FFD43B]/10 rounded-full blur-3xl"></div>
-        <div ref="statsBlob2" class="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div ref="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 opacity-0">
-          <div
-            v-for="(stat, index) in hero.stats"
-            :key="index"
-            class="stats-item text-center group cursor-pointer"
-            :data-index="index"
-          >
-            <!-- Icon - Yellow Theme -->
-            <div :class="[
-              'inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl backdrop-blur-sm text-3xl transition-all duration-500 group-hover:scale-110 bg-[#FFD43B]/20 group-hover:bg-[#FFD43B]/30'
-            ]">
-              {{ getStatIcon(index) }}
-            </div>
-
-            <!-- Counter -->
-            <div class="mb-2">
-              <span class="text-4xl md:text-5xl font-bold text-white transition-all duration-500 group-hover:text-[#FFD43B]">
-                <span v-if="isStatsVisible">
-                  <component :is="AnimatedCounter" :value="parseStatValue(stat.content)" :duration="2000" />
-                </span>
-                <span v-else>0</span>
-                {{ getStatSuffix(stat.content) }}
-              </span>
-            </div>
-
-            <!-- Label -->
-            <div class="text-base md:text-lg font-medium text-gray-300 transition-colors duration-300 group-hover:text-[#FFD43B]">
-              {{ stat.title || '-' }}
-            </div>
-
-            <!-- Hover Line - Yellow -->
-            <div class="mt-4 mx-auto w-0 h-0.5 group-hover:w-full transition-all duration-500 bg-gradient-to-r from-transparent via-[#FFD43B] to-transparent"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Decoration -->
-      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD43B]/30 to-transparent"></div>
-    </div>
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, watchEffect } from 'vue'
+import { ref, onMounted, watchEffect } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { API_ENDPOINTS } from '@/config/api'
@@ -451,73 +391,37 @@ function isExternal(link) {
   return /^https?:\/\//.test(link)
 }
 
-function parseStatValue(content) {
-  if (!content) return 0
-  const match = content.toString().match(/\d+/)
-  return match ? parseInt(match[0]) : 0
-}
-
-function getStatSuffix(content) {
-  if (!content) return ''
-  const str = content.toString()
-  if (str.includes('k') || str.includes('K')) return 'K+'
-  if (str.includes('+')) return '+'
-  if (str.includes('%')) return '%'
-  return ''
-}
-
-function getStatIcon(index) {
-  const icons = ['✓', '★', '♦', '◆']
-  return icons[index % icons.length]
-}
-
-// Animated Counter Component
-const AnimatedCounter = {
-  props: {
-    value: { type: Number, required: true },
-    duration: { type: Number, default: 2000 }
-  },
-  template: '<span>{{ count }}</span>',
-  setup(props) {
-    const count = ref(0)
-
-    watch(
-      () => props.value,
-      (newValue) => {
-        if (newValue === 0) {
-          count.value = 0
-          return
-        }
-
-        gsap.to(count, {
-          value: newValue,
-          duration: props.duration / 1000,
-          ease: 'power2.out',
-          onUpdate: () => {
-            count.value = Math.floor(count.value)
-          }
-        })
-      },
-      { immediate: true }
-    )
-
-    return { count }
-  }
-}
 
 // Load data
 watchEffect(() => {
   const allData = props.pageData || {}
-  const sliderSection = parse(allData.slider_home)
+  
+  // Ambil slider_home, jika array ambil yang pertama [0]
+  let sliderData = allData.slider_home
+  if (Array.isArray(sliderData)) {
+    sliderData = sliderData[0]
+  }
+  const sliderSection = parse(sliderData)
+  
+  const sliderTheme2Item = getItemByTag('slider_theme2', allData)?.[0] || {}
   const statsItems = getItemByTag('stats', allData) || []
   const statsBgItem = getItemByTag('stats_bg', allData)?.[0] || {}
   const primaryButtonItem = getItemByTag('slider_primary_button', allData)?.[0] || {}
   const secondaryButtonItem = getItemByTag('slider_secondary_button', allData)?.[0] || {}
+  const atributHome2Items = getItemByTag('atribut_home2', allData) || []
+
+  if (atributHome2Items.length) {
+    miniStats.value = atributHome2Items.map(item => ({
+      value: item.title   || '',   // contoh: "25K+"
+      label: item.content || ''    // contoh: "happy Customers"
+    }))
+  }
+
 
   hero.value = {
     title: sliderSection.title || 'Welcome to Our Company',
-    subtitle: sliderSection.subtitle || 'Building the Future',
-    badge: sliderSection.badge || 'We Grow with Passion',
+     subtitle: sliderTheme2Item.title   || sliderSection.subtitle || 'Building the Futu',
+  badge:    sliderTheme2Item.content || sliderSection.badge    || 'We Grow with Paion',
     content: sliderSection.content || 'Transform your business with our innovative solutions and expert team.',
     icon: sliderSection.icon || '',
     link: sliderSection.link || '',
@@ -536,9 +440,6 @@ watchEffect(() => {
       link: secondaryButtonItem.link || '#'
     }
   }
-
-  console.log('Hero images:', hero.value.images)
-  console.log('Stats bg:', hero.value.stats_bg)
 })
 </script>
 

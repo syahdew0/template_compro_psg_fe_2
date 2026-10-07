@@ -29,10 +29,19 @@
             />
           </div>
 
-          <!-- Floating Badge -->
-          <div class="absolute top-8 -right-4 bg-gradient-to-br from-[#FFD43B] to-[#FFA500] text-[#1A1A1A] px-6 py-3 rounded-2xl shadow-xl font-bold text-sm transform rotate-3 hover:rotate-0 transition-transform duration-300">
-            📞 Contact Us
-          </div>
+          <!-- Floating Badge (Dynamic from contact_us2) -->
+<div
+  v-if="contactUs2"
+  class="absolute top-8 -right-4 bg-gradient-to-br from-[#FFD43B] to-[#FFA500] text-[#1A1A1A] px-6 py-3 rounded-2xl shadow-xl font-bold text-sm transform rotate-3 hover:rotate-0 transition-transform duration-300 flex items-center gap-2"
+>
+  <img
+    v-if="contactUs2.icon"
+    :src="contactUs2.icon"
+    alt="Icon"
+    class="w-5 h-5"
+  />
+  <span v-html="contactUs2.title"></span>
+</div>
 
           <!-- Decorative Circle -->
           <div class="absolute -bottom-4 -left-4 w-24 h-24 bg-[#FFD43B]/20 rounded-full blur-xl"></div>
@@ -134,6 +143,7 @@ const addressRef = ref(null)
 const ctaRef = ref(null)
 const curveRef = ref(null)
 const dotsRef = ref(null)
+const contactUs2 = ref(null)
 
 const contactBlocks = ref({
   main: {},
@@ -258,11 +268,15 @@ onMounted(() => {
     contactBlocks.value = {
       main: parse(data.contact_info_main),
       labels: parse(data.contact_info_badge),
-      hours: parse(data.contact_info_hours),
-      support: parse(data.contact_info_support),
-      address: parse(data.contact_info_address)
+      hours: parse(data.contact_info_hours2),
+      support: parse(data.contact_info_support2),
+      address: parse(data.contact_info_address2)
     }
 
+     // ➕ Ambil dan set data contact_us2
+    const contactUsArr = parse(data.contact_us2)   // biasanya array dari CMS
+    contactUs2.value = Array.isArray(contactUsArr) ? contactUsArr[0] : contactUsArr
+    
     // Initialize animations after data is loaded
     setTimeout(() => {
       initAnimations()

@@ -12,7 +12,7 @@
       <!-- Logo Section -->
       <div 
         class="flex items-center gap-3 cursor-pointer group flex-shrink-0"
-        @click="navigateOrScroll('PageManagement')"
+        @click="navigateOrScroll({ path: '#' })"
       >
         <!-- Logo Image -->
         <div 
@@ -46,23 +46,23 @@
           @click="item.action"
           class="relative px-6 py-2.5 font-semibold text-sm transition-all duration-300 group overflow-hidden rounded-xl"
           :class="[
-            item.label === 'Beranda'
+            isActiveMenu(item)
               ? 'text-black bg-gradient-to-r from-[#FFD43B] to-yellow-400 hover:shadow-lg hover:shadow-[#FFD43B]/50'
               : 'text-gray-800 hover:text-[#FFD43B]'
           ]"
         >
           <span class="relative z-10 flex items-center gap-2">
-            <i :class="item.icon" class="text-base"></i>
+            <i v-if="item.icon" :class="item.icon" class="text-base"></i>
             {{ item.label }}
           </span>
           
           <span 
-            v-if="item.label !== 'Beranda'"
+            v-if="!isActiveMenu(item)"
             class="absolute bottom-1 left-1/2 w-0 h-0.5 bg-gradient-to-r from-[#FFD43B] to-yellow-400 transform -translate-x-1/2 group-hover:w-3/4 transition-all duration-300 rounded-full"
           ></span>
           
           <span 
-            v-if="item.label !== 'Beranda'"
+            v-if="!isActiveMenu(item)"
             class="absolute inset-0 bg-gradient-to-r from-[#FFD43B]/5 via-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
           ></span>
         </button>
@@ -147,7 +147,7 @@
           @click="handleMobileClick(item)"
           class="w-full text-left px-5 py-4 rounded-xl font-semibold text-sm transition-all duration-300 group relative overflow-hidden"
           :class="[
-            item.label === 'Beranda'
+            isActiveMenu(item)
               ? 'bg-gradient-to-r from-[#FFD43B] to-yellow-400 text-black border border-yellow-400'
               : 'bg-white text-gray-900 hover:bg-yellow-50 border border-gray-200 hover:border-[#FFD43B]/50 hover:text-[#FFD43B]'
           ]"
@@ -159,14 +159,14 @@
         >
           <div class="flex items-center justify-between">
             <span class="flex items-center gap-3">
-              <i :class="item.icon" class="text-base w-5 flex items-center justify-center"></i>
+              <i v-if="item.icon" :class="item.icon" class="text-base w-5 flex items-center justify-center"></i>
               {{ item.label }}
             </span>
             <i class="fa-solid fa-chevron-right text-xs opacity-60 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all"></i>
           </div>
 
           <div 
-            v-if="item.label !== 'Beranda'"
+            v-if="!isActiveMenu(item)"
             class="absolute inset-0 bg-gradient-to-r from-[#FFD43B]/10 via-yellow-500/10 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700 rounded-xl"
           ></div>
         </button>
@@ -176,17 +176,23 @@
       <div class="sticky bottom-0 p-6 bg-gradient-to-t from-white to-transparent border-t border-gray-200 backdrop-blur-xl">
         <div class="space-y-3">
           <div class="flex justify-center gap-4">
-            <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#FFD43B]/30 transition-all">
-              <i class="fa-brands fa-facebook text-sm text-gray-900"></i>
-            </a>
-            <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#FFD43B]/30 transition-all">
-              <i class="fa-brands fa-instagram text-sm text-gray-900"></i>
-            </a>
-            <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#FFD43B]/30 transition-all">
-              <i class="fa-brands fa-linkedin text-sm text-gray-900"></i>
-            </a>
-          </div>
-          <p class="text-center text-xs text-gray-600">© 2025 {{ title }}</p>
+  <a
+    v-for="(icon, i) in footerIcons"
+    :key="i"
+    :href="icon.link || '#'"
+    target="_blank" rel="noopener"
+    class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#FFD43B]/30 transition-all"
+  >
+    <img
+      v-if="icon.icon"
+      :src="icon.icon"
+      alt="icon"
+      class="w-5 h-5 object-contain"
+    />
+  </a>
+</div>
+
+          <p class="text-center pt-4 text-xs text-gray-600">{{ title }}</p>
         </div>
       </div>
     </div>
@@ -211,17 +217,125 @@ const route = useRoute()
 const menuOpen = ref(false)
 const isScrolled = ref(false)
 const logoUrl = ref('')
+const menus = ref([])
+const footerIcons = ref([])
 
-const title = computed(() => props.settings?.title || '')
-const siteDescription = computed(() => props.settings?.site_description || '')
+// Dynamic data from API
+const title = ref('Pasifik Sukses Gemilang')
+const siteDescription = ref('Mitra Sukses Bersama')
 
-const navItems = computed(() => [
-  { label: 'Beranda', action: () => navigateOrScroll('PageManagement'), icon: 'fa-solid fa-home' },
-  { label: 'Group', action: () => navigateOrScroll('AnakPerusahaan'), icon: 'fa-solid fa-sitemap' },
-  { label: 'Careers', action: () => router.push('/careers'), icon: 'fa-solid fa-briefcase' },
-  { label: 'News', action: () => router.push('/post'), icon: 'fa-solid fa-newspaper' },
-  { label: 'Hubungi Kami', action: () => navigateOrScroll('contactpage'), icon: 'fa-solid fa-envelope' }
-])
+function parse(data) {
+  if (data == null) return null;
+  let out = data;
+  if (typeof out === 'string') {
+    try { out = JSON.parse(out) } catch (e) { out = data }
+  }
+  if (Array.isArray(out)) {
+    out = out.map(it => {
+      if (typeof it === 'string') {
+        try { return JSON.parse(it) } catch (e) { return null }
+      }
+      return it
+    }).filter(Boolean)
+  }
+  return out
+}
+
+function toHttps(url) {
+  if (!url || typeof url !== 'string') return ''
+  return url.startsWith('http://apicompro.phisoft.co.id')
+    ? url.replace('http://', 'https://')
+    : url
+}
+
+function loadFooterIcons() {
+  const raw = localStorage.getItem('customPageData:Home')
+  if (!raw) return
+
+  try {
+    const data = JSON.parse(raw)
+
+    // === icon_footer2 ===
+    const iconFooterRaw   = data.icon_footer2 ?? null
+    const iconFooterItems = parse(iconFooterRaw)
+    const arr = Array.isArray(iconFooterItems) ? iconFooterItems : (iconFooterItems ? [iconFooterItems] : [])
+
+    footerIcons.value = arr.map(it => ({
+      title: it?.title ?? '',
+      icon : toHttps(it?.icon ?? ''),
+      link : it?.link ?? '#'           // kalau ada link di data, kalau tidak fallback '#'
+    }))
+  } catch (e) {
+    console.error('Gagal parsing icon_footer2:', e)
+  }
+}
+
+// Static fallback menu items with icons
+const staticNavItems = [
+  { label: 'Beranda', path: '#', icon: 'fa-solid fa-home' },
+  { label: 'Group', path: '#AnakPerusahaan', icon: 'fa-solid fa-sitemap' },
+  { label: 'Careers', path: '/careers', icon: 'fa-solid fa-briefcase' },
+  { label: 'News', path: '/post', icon: 'fa-solid fa-newspaper' },
+  { label: 'Hubungi Kami', path: '#contactpage', icon: 'fa-solid fa-envelope' }
+]
+
+// Computed property to merge dynamic menus with actions
+const navItems = computed(() => {
+  if (menus.value.length > 0) {
+    return menus.value.map(menu => ({
+      id: menu.id,
+      label: menu.title,
+      path: menu.path,
+      icon: getIconForMenu(menu.title),
+      action: () => navigateOrScroll(menu)
+    }))
+  }
+  
+  // Fallback to static menu
+  return staticNavItems.map(item => ({
+    label: item.label,
+    path: item.path,
+    icon: item.icon,
+    action: () => navigateOrScroll(item)
+  }))
+})
+
+// Helper function to get icon based on menu title
+const getIconForMenu = (title) => {
+  const iconMap = {
+    'beranda': 'fa-solid fa-home',
+    'home': 'fa-solid fa-home',
+    'group': 'fa-solid fa-sitemap',
+    'tentang': 'fa-solid fa-info-circle',
+    'about': 'fa-solid fa-info-circle',
+    'careers': 'fa-solid fa-briefcase',
+    'karir': 'fa-solid fa-briefcase',
+    'news': 'fa-solid fa-newspaper',
+    'berita': 'fa-solid fa-newspaper',
+    'contact': 'fa-solid fa-envelope',
+    'kontak': 'fa-solid fa-envelope',
+    'hubungi': 'fa-solid fa-envelope'
+  }
+  
+  const lowerTitle = title.toLowerCase()
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (lowerTitle.includes(key)) {
+      return icon
+    }
+  }
+  return 'fa-solid fa-circle'
+}
+
+// Check if menu is active
+const isActiveMenu = (item) => {
+  if (!item?.path) return false
+  
+  // Check for home/beranda
+  if (item.path === '#' && route.path === '/') return true
+  if (item.path.startsWith('#')) return false
+  
+  return route.path === item.path
+}
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -238,12 +352,25 @@ const scrollToElement = (id) => {
   })
 }
 
-const navigateOrScroll = (id) => {
-  if (route.path !== '/') {
-    localStorage.setItem('scrollTarget', id)
-    router.push('/')
+const navigateOrScroll = (item) => {
+  if (!item?.path) return
+
+  if (item.path.startsWith('#')) {
+    const targetId = item.path.slice(1)
+
+    if (!targetId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    if (route.path !== '/') {
+      localStorage.setItem('scrollTarget', targetId)
+      router.push('/')
+    } else {
+      scrollToElement(targetId)
+    }
   } else {
-    scrollToElement(id)
+    router.push(item.path)
   }
 }
 
@@ -264,52 +391,100 @@ const handleMobileClick = (item) => {
   setTimeout(() => item.action(), 150)
 }
 
+// Fetch logo from API
 const fetchLogo = async () => {
   try {
-    // Pakai endpoint yang benar. Kalau memang public, biarkan.
-    const res = await axios.get(API_ENDPOINTS.settingLogo);
-
-
-    const raw = res?.data || {};
-    // Ambil dari beberapa kemungkinan field (paling umum di proyekmu)
+    const res = await axios.get(API_ENDPOINTS.settingLogo)
+    const raw = res?.data || {}
+    
     const candidate =
       raw.logo ||
       raw.icon ||
-      raw.value ||                 // ← penting: versi lama pakai "value"
+      raw.value ||
       raw?.data?.logo ||
       raw?.data?.icon ||
       raw?.data?.value ||
-      '';
+      ''
 
     const joinUrl = (base, path) =>
-      base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
+      base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '')
 
     if (candidate) {
       logoUrl.value = String(candidate).startsWith('http')
         ? candidate
-        : joinUrl(API_URL, candidate);
+        : joinUrl(API_URL, candidate)
     } else {
-      // fallback terakhir: dari props settings bila ada
-      const fallback = props.settings?.logo || props.settings?.icon || '';
-      logoUrl.value = fallback ? (String(fallback).startsWith('http') ? fallback : joinUrl(API_URL, fallback)) : '';
+      const fallback = props.settings?.logo || props.settings?.icon || ''
+      logoUrl.value = fallback 
+        ? (String(fallback).startsWith('http') ? fallback : joinUrl(API_URL, fallback)) 
+        : ''
     }
   } catch (err) {
-    console.error('Logo fetch error:', err);
-    const fallback = props.settings?.logo || props.settings?.icon || '';
+    console.error('Logo fetch error:', err)
+    const fallback = props.settings?.logo || props.settings?.icon || ''
     if (fallback) {
       const joinUrl = (base, path) =>
-        base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
-      logoUrl.value = String(fallback).startsWith('http') ? fallback : joinUrl(API_URL, fallback);
+        base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '')
+      logoUrl.value = String(fallback).startsWith('http') 
+        ? fallback 
+        : joinUrl(API_URL, fallback)
     } else {
-      logoUrl.value = '';
+      logoUrl.value = ''
     }
   }
-};
+}
+
+// Fetch site settings (title & description)
+const fetchSiteSettings = async () => {
+  try {
+    const res = await axios.get(API_ENDPOINTS.siteSettingsPublic(1))
+    const s = res.data?.settings || {}
+    title.value = s.title || title.value
+    siteDescription.value = s.site_description || siteDescription.value
+  } catch (err) {
+    console.error('Error fetch site settings:', err)
+  }
+}
+
+// Fetch menu from API
+const fetchMenu = async () => {
+  try {
+    const groupSlug = window.MENU_GROUP_SLUG || 'main'
+    const res = await axios.get(API_ENDPOINTS.menuListByGroup(groupSlug))
+
+    menus.value = (res.data?.data || res.data || [])
+      .sort((a, b) => {
+        if (a.order !== b.order) return a.order - b.order
+        return a.id - b.id
+      })
+      .map((m) => ({
+        ...m,
+        path: m.path || m.link || '/',
+        title: m.title || 'Tanpa Judul',
+        target: m.open_in_new_tab ? '_blank' : '_self',
+      }))
+  } catch (err) {
+    console.error('Error fetch menu:', err)
+  }
+}
 
 onMounted(() => {
   fetchLogo()
+  fetchSiteSettings()
+  fetchMenu()
+  loadFooterIcons()
+  
   window.addEventListener('scroll', handleScroll)
   handleScroll()
+
+  // Handle scroll target from localStorage
+  const scrollTarget = localStorage.getItem('scrollTarget')
+  if (scrollTarget) {
+    nextTick(() => {
+      scrollToElement(scrollTarget)
+      localStorage.removeItem('scrollTarget')
+    })
+  }
 })
 
 onUnmounted(() => {

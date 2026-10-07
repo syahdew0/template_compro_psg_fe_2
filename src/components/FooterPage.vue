@@ -135,9 +135,6 @@
         <p class="text-sm text-gray-700">
           {{ footerBlocks.bottom.title || footerBlocks.main.title }}
         </p>
-        <p class="text-xs text-gray-600">
-          © {{ new Date().getFullYear() }} All rights reserved.
-        </p>
       </div>
     </div>
   </footer>
